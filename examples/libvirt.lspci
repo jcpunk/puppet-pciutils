@@ -1,0 +1,162 @@
+
+Slot:	0000:00:00.0
+Class:	Host bridge
+Vendor:	Intel Corporation
+Device:	82G33/G31/P35/P31 Express DRAM Controller
+SVendor:	Red Hat, Inc.
+SDevice:	QEMU Virtual Machine
+
+Slot:	0000:00:01.0
+Class:	VGA compatible controller
+Vendor:	Red Hat, Inc.
+Device:	QXL paravirtual graphic card
+SVendor:	Red Hat, Inc.
+SDevice:	QEMU Virtual Machine
+Rev:	05
+Driver:	qxl
+Module:	qxl
+
+Slot:	0000:00:02.0
+Class:	PCI bridge
+Vendor:	Red Hat, Inc.
+Device:	QEMU PCIe Root port
+Driver:	pcieport
+
+Slot:	0000:00:02.1
+Class:	PCI bridge
+Vendor:	Red Hat, Inc.
+Device:	QEMU PCIe Root port
+Driver:	pcieport
+
+Slot:	0000:00:02.2
+Class:	PCI bridge
+Vendor:	Red Hat, Inc.
+Device:	QEMU PCIe Root port
+Driver:	pcieport
+
+Slot:	0000:00:02.3
+Class:	PCI bridge
+Vendor:	Red Hat, Inc.
+Device:	QEMU PCIe Root port
+Driver:	pcieport
+
+Slot:	0000:00:02.4
+Class:	PCI bridge
+Vendor:	Red Hat, Inc.
+Device:	QEMU PCIe Root port
+Driver:	pcieport
+
+Slot:	0000:00:02.5
+Class:	PCI bridge
+Vendor:	Red Hat, Inc.
+Device:	QEMU PCIe Root port
+Driver:	pcieport
+
+Slot:	0000:00:02.6
+Class:	PCI bridge
+Vendor:	Red Hat, Inc.
+Device:	QEMU PCIe Root port
+Driver:	pcieport
+
+Slot:	0000:00:1b.0
+Class:	Audio device
+Vendor:	Intel Corporation
+Device:	82801I (ICH9 Family) HD Audio Controller
+SVendor:	Red Hat, Inc.
+SDevice:	QEMU Virtual Machine
+Rev:	03
+Driver:	snd_hda_intel
+Module:	snd_hda_intel
+
+Slot:	0000:00:1f.0
+Class:	ISA bridge
+Vendor:	Intel Corporation
+Device:	82801IB (ICH9) LPC Interface Controller
+SVendor:	Red Hat, Inc.
+SDevice:	QEMU Virtual Machine
+Rev:	02
+Driver:	lpc_ich
+Module:	lpc_ich
+
+Slot:	0000:00:1f.2
+Class:	SATA controller
+Vendor:	Intel Corporation
+Device:	82801IR/IO/IH (ICH9R/DO/DH) 6 port SATA Controller [AHCI mode]
+SVendor:	Red Hat, Inc.
+SDevice:	QEMU Virtual Machine
+Rev:	02
+ProgIf:	01
+Driver:	ahci
+Module:	ahci
+
+Slot:	0000:00:1f.3
+Class:	SMBus
+Vendor:	Intel Corporation
+Device:	82801I (ICH9 Family) SMBus Controller
+SVendor:	Red Hat, Inc.
+SDevice:	QEMU Virtual Machine
+Rev:	02
+Driver:	i801_smbus
+Module:	i2c_i801
+
+Slot:	0000:01:00.0
+Class:	Ethernet controller
+Vendor:	Red Hat, Inc.
+Device:	Virtio network device
+SVendor:	Red Hat, Inc.
+SDevice:	Device 1100
+PhySlot:	0
+Rev:	01
+Driver:	virtio-pci
+
+Slot:	0000:02:00.0
+Class:	USB controller
+Vendor:	Red Hat, Inc.
+Device:	QEMU XHCI Host Controller
+SVendor:	Red Hat, Inc.
+SDevice:	Device 1100
+PhySlot:	0-2
+Rev:	01
+ProgIf:	30
+Driver:	xhci_hcd
+
+Slot:	0000:03:00.0
+Class:	Communication controller
+Vendor:	Red Hat, Inc.
+Device:	Virtio console
+SVendor:	Red Hat, Inc.
+SDevice:	Device 1100
+PhySlot:	0-3
+Rev:	01
+Driver:	virtio-pci
+
+Slot:	0000:04:00.0
+Class:	SCSI storage controller
+Vendor:	Red Hat, Inc.
+Device:	Virtio block device
+SVendor:	Red Hat, Inc.
+SDevice:	Device 1100
+PhySlot:	0-4
+Rev:	01
+Driver:	virtio-pci
+
+Slot:	0000:05:00.0
+Class:	Unclassified device [00ff]
+Vendor:	Red Hat, Inc.
+Device:	Virtio memory balloon
+SVendor:	Red Hat, Inc.
+SDevice:	Device 1100
+PhySlot:	0-5
+Rev:	01
+Driver:	virtio-pci
+
+Slot:	0000:06:00.0
+Class:	Unclassified device [00ff]
+Vendor:	Red Hat, Inc.
+Device:	Virtio RNG
+SVendor:	Red Hat, Inc.
+SDevice:	Device 1100
+PhySlot:	0-6
+Rev:	01
+Driver:	virtio-pci
+
