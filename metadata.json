@@ -2,9 +2,11 @@
   "name": "jcpunk-pciutils",
   "version": "0.1.0",
   "author": "Pat Riehecky",
-  "summary": "",
+  "summary": "Manage pciutils",
   "license": "Apache-2.0",
-  "source": "",
+  "source": "https://github.com/jcpunk/puppet-pciutils",
+  "project_page": "https://github.com/jcpunk/puppet-pciutils",
+  "issues_url": "https://github.com/jcpunk/puppet-pciutils/issues",
   "dependencies": [
 
   ],
