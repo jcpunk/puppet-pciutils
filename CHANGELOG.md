@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.0.0
+
+**Breaking Change**
+
+- The structure of the fact has changed completely.
+
+**Features**
+
+- Cards may now be located by their hex id codes
+
 ## Release 0.1.0
 
 **Features**
