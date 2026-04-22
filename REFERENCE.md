@@ -12,7 +12,9 @@
 
 ### <a name="pciutils"></a>`pciutils`
 
-Manages the pciutils package
+This class ensures the `pciutils` package is present (or absent) on the system.
+It accepts a list of package names to allow variations across platforms and an ensure
+value that follows the standard Puppet package `ensure` semantics.
 
 #### Examples
 
@@ -21,9 +23,11 @@ Manages the pciutils package
 ```puppet
 include pciutils
 
+class { 'pciutils': }
+
 class { 'pciutils':
-  package_names  => ['pciutils'],
-  package_ensure => 'absent',
+  package_names  => ['pciutils', 'pciutils-extra'],
+  package_ensure => 'present',
 }
 ```
 
@@ -31,18 +35,22 @@ class { 'pciutils':
 
 The following parameters are available in the `pciutils` class:
 
-* [`package_names`](#package_names)
-* [`package_ensure`](#package_ensure)
+* [`package_names`](#-pciutils--package_names)
+* [`package_ensure`](#-pciutils--package_ensure)
 
-##### <a name="package_names"></a>`package_names`
+##### <a name="-pciutils--package_names"></a>`package_names`
 
 Data type: `Array[String[1]]`
 
 Packages to manage
 
-##### <a name="package_ensure"></a>`package_ensure`
+Default value: `['pciutils']`
 
-Data type: `String`
+##### <a name="-pciutils--package_ensure"></a>`package_ensure`
+
+Data type: `Stdlib::Ensure::Package`
 
 Package ensure parameter
+
+Default value: `'present'`
 
