@@ -168,6 +168,7 @@ Rev:    03
 ProgIf: 00
 Driver: snd_hda_intel
 Module: snd_hda_intel
+Module: blaster
 
 Slot:   0000:00:1f.0
 Class:  0601
