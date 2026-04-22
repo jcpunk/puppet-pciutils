@@ -5,17 +5,18 @@
 #   The fact runs `lspci -vmm` (human‑readable) and `lspci -vmmn` (hex codes)
 #   and builds a three‑part hash:
 #
-#   * `by_name` – hierarchical tree keyed by human‑readable class and vendor,
+#   * `by_name` - hierarchical tree keyed by human‑readable class and vendor,
 #     ending in a slot hash with the device’s properties.
-#   * `by_id`   – tree keyed by numeric vendor/device IDs, each leaf being an
+#   * `by_id`   - tree keyed by numeric vendor/device IDs, each leaf being an
 #     array of slots that match the ID pair.
-#   * `installed_devices_by_id` – flat, alphabetically sorted array of
+#   * `installed_devices_by_id` - flat, alphabetically sorted array of
 #     `<vendor_hex>.<device_hex>` strings for all detected devices.
 #
 # @return [Hash] Structured PCI information with the following keys:
-#   * `by_name`                – `Hash[String => Hash[String => Hash[String => Hash]]]`
-#   * `by_id`                  – `Hash[String => Hash[String => Array[String]]]`
-#   * `installed_devices_by_id` – `Array[String]`
+#   * `by_name`                 - `Hash[String => Hash[String => Hash[String => Hash]]]`
+#   * `by_id`                   - `Hash[String => Hash[String => Array[String]]]`
+#   * `installed_devices_by_id` - `Array[String]`
+#   * `installed_vendors_by_id` - `Array[String]`
 #
 # @example Sample output (truncated)
 #   {
@@ -35,6 +36,7 @@
 #       "8086" => { "15d8" => ["0000:00:1f.6"] }
 #     },
 #     "installed_devices_by_id" => ["8086.15d8"]
+#     "installed_vendors_by_id" => ["8086"]
 #   }
 #
 Facter.add(:lspci) do
@@ -119,6 +121,7 @@ Facter.add(:lspci) do
     by_name = {}
     by_id   = {}
     installed_devices_by_id = []
+    installed_vendors_by_id = []
 
     # Union of slots from both outputs (gracefully handles missing data)
     all_slots = (by_slot_vmm.keys | by_slot_vmmn.keys)
@@ -180,12 +183,18 @@ Facter.add(:lspci) do
       device_hex_lower = device_hex.downcase
 
       installed_devices_by_id << "#{vendor_hex_lower}.#{device_hex_lower}"
+      installed_vendors_by_id << vendor_hex_lower
 
       by_id[vendor_hex_lower] ||= {}
       by_id[vendor_hex_lower][device_hex_lower] ||= []
       by_id[vendor_hex_lower][device_hex_lower] << slot
     end
 
-    { 'by_id' => sort_hash_deep(by_id), 'by_name' => sort_hash_deep(by_name), 'installed_devices_by_id' => installed_devices_by_id.sort.uniq }
+    {
+      'by_id'   => sort_hash_deep(by_id),
+      'by_name' => sort_hash_deep(by_name),
+      'installed_devices_by_id' => installed_devices_by_id.sort.uniq,
+      'installed_vendors_by_id' => installed_vendors_by_id.sort.uniq,
+    }
   end
 end

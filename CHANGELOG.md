@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Release 1.0.0
 
+**Features**
+
+- Added hex code list of vendors detected on system
+
+## Release 1.0.0
+
 **Breaking Change**
 
 - The structure of the fact has changed completely.

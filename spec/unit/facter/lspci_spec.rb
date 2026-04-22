@@ -448,7 +448,12 @@ describe :lspci, type: :fact do
             '8086.2930',
             '8086.293e',
             '8086.29c0',
-          ]
+          ],
+          'installed_vendors_by_id' => [
+            '1af4',
+            '1b36',
+            '8086',
+          ],
         },
       )
     }
