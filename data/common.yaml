@@ -1,5 +1,1 @@
----
-pciutils::package_names:
- - pciutils
-pciutils::package_ensure: installed
-...
+--- {}

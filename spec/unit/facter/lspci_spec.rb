@@ -16,7 +16,7 @@ describe :lspci, type: :fact do
       allow(Facter::Core::Execution).to receive(:which).with('lspci').and_return(false)
     end
 
-    it { expect(fact.value).to eq({}) }
+    it { expect(fact.value).to eq(nil) }
   end
 
   context 'with lspci on libvirt' do
@@ -433,6 +433,22 @@ describe :lspci, type: :fact do
               },
             },
           },
+          'installed_devices_by_id' => [
+            '1af4.1041',
+            '1af4.1042',
+            '1af4.1043',
+            '1af4.1044',
+            '1af4.1045',
+            '1af4.1048',
+            '1af4.1050',
+            '1b36.000c',
+            '1b36.000d',
+            '8086.2918',
+            '8086.2922',
+            '8086.2930',
+            '8086.293e',
+            '8086.29c0',
+          ]
         },
       )
     }

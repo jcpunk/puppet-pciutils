@@ -1,20 +1,42 @@
 # frozen_string_literal: true
 
-# _Description_
+# @summary Returns PCI device information from `lspci`.
 #
-# Return lspci data as a structured hash with two trees:
-#   by_name: Class (human) -> Vendor (human) -> Slot -> props
-#            - Uses human-readable names wherever lspci provides them
-#            - Includes hex IDs as properties (VendorID, DeviceID, etc.)
+#   The fact runs `lspci -vmm` (human‑readable) and `lspci -vmmn` (hex codes)
+#   and builds a three‑part hash:
 #
-#   by_id:   vendor_hex -> device_hex -> [slots]
-#            - Uses hex codes for matching drivers/hardware
+#   * `by_name` – hierarchical tree keyed by human‑readable class and vendor,
+#     ending in a slot hash with the device’s properties.
+#   * `by_id`   – tree keyed by numeric vendor/device IDs, each leaf being an
+#     array of slots that match the ID pair.
+#   * `installed_devices_by_id` – flat, alphabetically sorted array of
+#     `<vendor_hex>.<device_hex>` strings for all detected devices.
 #
-# Built from two lspci invocations:
-#   - lspci -vmm: human-readable Class, Vendor names, Device descriptions
-#   - lspci -vmmn: hex codes for Class, Vendor, Device, SVendor, SDevice
+# @return [Hash] Structured PCI information with the following keys:
+#   * `by_name`                – `Hash[String => Hash[String => Hash[String => Hash]]]`
+#   * `by_id`                  – `Hash[String => Hash[String => Array[String]]]`
+#   * `installed_devices_by_id` – `Array[String]`
 #
-# Slots uniquely identify devices and serve as the cross-reference anchor.
+# @example Sample output (truncated)
+#   {
+#     "by_name" => {
+#       "Ethernet controller" => {
+#         "Intel Corporation" => {
+#           "0000:00:1f.6" => {
+#             "Device"   => "Ethernet Connection I219-LM",
+#             "DeviceID" => "0x15d8",
+#             "Driver"   => "e1000e",
+#             ...
+#           }
+#         }
+#       }
+#     },
+#     "by_id" => {
+#       "8086" => { "15d8" => ["0000:00:1f.6"] }
+#     },
+#     "installed_devices_by_id" => ["8086.15d8"]
+#   }
+#
 Facter.add(:lspci) do
   confine kernel: 'Linux'
 
@@ -81,7 +103,7 @@ Facter.add(:lspci) do
   end
 
   setcode do
-    next {} unless Facter::Core::Execution.which('lspci')
+    return {} unless Facter::Core::Execution.which('lspci')
 
     # Parse both outputs into intermediate hashes indexed by slot
     by_slot_vmm = parse_lspci_blocks(
@@ -96,6 +118,7 @@ Facter.add(:lspci) do
 
     by_name = {}
     by_id   = {}
+    installed_devices_by_id = []
 
     # Union of slots from both outputs (gracefully handles missing data)
     all_slots = (by_slot_vmm.keys | by_slot_vmmn.keys)
@@ -156,11 +179,13 @@ Facter.add(:lspci) do
       vendor_hex_lower = vendor_hex.downcase
       device_hex_lower = device_hex.downcase
 
+      installed_devices_by_id << "#{vendor_hex_lower}.#{device_hex_lower}"
+
       by_id[vendor_hex_lower] ||= {}
       by_id[vendor_hex_lower][device_hex_lower] ||= []
       by_id[vendor_hex_lower][device_hex_lower] << slot
     end
 
-    { 'by_id' => sort_hash_deep(by_id), 'by_name' => sort_hash_deep(by_name) }
+    { 'by_id' => sort_hash_deep(by_id), 'by_name' => sort_hash_deep(by_name), 'installed_devices_by_id' => installed_devices_by_id.sort.uniq }
   end
 end
