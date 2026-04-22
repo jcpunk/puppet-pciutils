@@ -2,57 +2,84 @@
 
 # _Description_
 #
-# return the content of lspci as a hash
+# Return lspci data as a structured hash with two trees:
+#   by_name: Class -> Vendor -> Slot -> props  (human readable, exact lspci strings)
+#   by_id:   vendor_hex -> device_hex -> [slots] (for driver/hardware matching)
+#
+# Both trees are built from a single invocation of lspci -vmm -k -b -D.
+# The -vmm flag emits hex IDs for Vendor/Device, human names for Class.
+# Slots uniquely identify devices and serve as the cross-reference anchor.
 Facter.add(:lspci) do
-  # https://puppet.com/docs/puppet/latest/fact_overview.html
   confine kernel: 'Linux'
-  retval = {}
 
-  if Facter::Util::Resolution.which('lspci')
-    slot = ''
-    type = ''
-    vendor = ''
-    Facter::Util::Resolution.exec('lspci -vv -mm -k -b -D 2>/dev/null').each_line do |line|
-      # only parse lines with text
-      if %r{.+}.match?(line)
-        txt = line.split(%r{:\t})
-        if txt[0] == 'Slot'
-          slot = txt[1].strip
-          type = ''
-          vendor = ''
-          next
-        elsif txt[0] == 'Class'
-          type = txt[1].strip
-          next
-        elsif txt[0] == 'Vendor'
-          vendor = txt[1].strip
-          next
-        end
-
-        if (type != '') && (slot != '') && (vendor != '')
-          unless retval.key?(type)
-            retval[type] = {}
-          end
-
-          unless retval[type].key?(vendor)
-            retval[type][vendor] = {}
-          end
-
-          unless retval[type][vendor].key?(slot)
-            retval[type][vendor][slot] = {}
-          end
-
-          retval[type][vendor][slot][txt[0]] = txt[1].strip
-        end
-      else
-        slot = ''
-        type = ''
-        vendor = ''
-      end
-    end
-  end
+  LSPCI_CMD = 'lspci -vmm -k -b -D'
+  LSPCI_OPTS = { on_fail: nil, stderr_destination: :suppress }.freeze
 
   setcode do
-    retval
+    next {} unless Facter::Core::Execution.which('lspci')
+
+    by_name = {}
+    by_id   = {}
+
+    # State for the current device block; reset on blank line
+    slot = nil
+    klass = nil
+    vendor_name = nil
+    vendor_hex = nil
+    device_hex = nil
+    props = {}
+
+    flush = lambda do
+      # Only commit if we have the minimum required fields
+      if slot && klass && vendor_name && vendor_hex && device_hex
+        by_name[klass] ||= {}
+        by_name[klass][vendor_name] ||= {}
+        by_name[klass][vendor_name][slot] = props.merge(
+          'VendorID' => vendor_hex,
+          'DeviceID' => device_hex,
+        )
+
+        by_id[vendor_hex] ||= {}
+        by_id[vendor_hex][device_hex] ||= []
+        by_id[vendor_hex][device_hex] << slot
+      end
+
+      slot = nil
+      klass = nil
+      vendor_name = nil
+      vendor_hex = nil
+      device_hex = nil
+      props = {}
+    end
+
+    Facter::Core::Execution.execute(LSPCI_CMD, LSPCI_OPTS).each_line do |line|
+      line = line.chomp
+
+      if line.empty?
+        flush.call
+        next
+      end
+
+      key, value = line.split(":\t", 2)
+      next if value.nil?
+      value = value.strip
+
+      case key
+      when 'Slot'   then slot        = value
+      when 'Class'  then klass       = value
+      when 'Vendor' then vendor_hex  = value
+      when 'Device' then device_hex  = value
+      when 'SVendor'
+        # SVendor is the human-readable vendor name in -vmm output
+        vendor_name = value
+      else
+        props[key] = value
+      end
+    end
+
+    # Flush final block if file didn't end with a blank line
+    flush.call
+
+    { 'by_name' => by_name, 'by_id' => by_id }
   end
 end
