@@ -12,9 +12,6 @@
 Facter.add(:lspci) do
   confine kernel: 'Linux'
 
-  LSPCI_CMD = 'lspci -vmm -k -b -D'
-  LSPCI_OPTS = { on_fail: nil, stderr_destination: :suppress }.freeze
-
   setcode do
     next {} unless Facter::Core::Execution.which('lspci')
 
@@ -52,7 +49,7 @@ Facter.add(:lspci) do
       props = {}
     end
 
-    Facter::Core::Execution.execute(LSPCI_CMD, LSPCI_OPTS).each_line do |line|
+    Facter::Core::Execution.execute('lspci -vmm -k -b -D', on_fail: nil).each_line do |line|
       line = line.chomp
 
       if line.empty?
