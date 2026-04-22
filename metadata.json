@@ -14,60 +14,47 @@
     {
       "operatingsystem": "CentOS",
       "operatingsystemrelease": [
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "OracleLinux",
-      "operatingsystemrelease": [
-        "7"
+
       ]
     },
     {
       "operatingsystem": "RedHat",
       "operatingsystemrelease": [
-        "8",
-        "9"
-      ]
-    },
-    {
-      "operatingsystem": "Scientific",
-      "operatingsystemrelease": [
-        "7"
+
       ]
     },
     {
       "operatingsystem": "Debian",
       "operatingsystemrelease": [
-        "11"
+
       ]
     },
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-        "22.04"
+
       ]
     },
     {
       "operatingsystem": "Fedora",
       "operatingsystemrelease": [
-        "35"
+
       ]
     },
     {
       "operatingsystem": "SLES",
       "operatingsystemrelease": [
-        "15"
+
       ]
     }
   ],
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 6.21.0 < 9.0.0"
+      "version_requirement": ">= 8.0.0 < 9.0.0"
     }
   ],
-  "pdk-version": "3.5.1 (g2719cbc)",
-  "template-url": "pdk-default#3.5.1.2",
-  "template-ref": "tags/3.5.1.2-0-gfa96b82"
+  "pdk-version": "3.6.1 (ga18bc44)",
+  "template-url": "pdk-default#3.6.1",
+  "template-ref": "tags/3.6.1-0-gb9426e5"
 }
