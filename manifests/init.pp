@@ -15,7 +15,7 @@
 class pciutils (
   Array[String[1]] $package_names,
   String $package_ensure,
-){
+) {
   package { $package_names:
     ensure => $package_ensure,
   }
