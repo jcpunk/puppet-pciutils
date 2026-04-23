@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 1.3.0
+
+**Features**
+
+- Add Vendor and VendorID to by_name hash
+
 ## Release 1.2.0
 
 **Features**

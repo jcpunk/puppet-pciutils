@@ -99,6 +99,7 @@ Facter.add(:lspci) do
       key, value = line.split(':', 2)
       next if value.nil?
 
+      key = key.strip
       value = value.strip
 
       # Track slot for indexing
@@ -123,6 +124,12 @@ Facter.add(:lspci) do
     end
 
     blocks
+  end
+
+  # Finalize a flat Hash[String => Array] by sorting and deduplicating each array
+  # Returns a new hash; does not modify the original
+  def dedupe_and_sort_arrays(hash)
+    hash.transform_values { |value| value.sort.uniq }
   end
 
   setcode do
@@ -154,33 +161,47 @@ Facter.add(:lspci) do
       vmm = by_slot_vmm[slot] || {}
       vmmn = by_slot_vmmn[slot] || {}
 
-      # Extract keys for by_name tree structure
-      # Prefer human-readable from vmm, fallback to vmmn (which may be hex)
+      # Extract human-readable names: vmm is the primary source as it contains
+      # descriptive strings (e.g. "Intel Corporation"); vmmn is the fallback
       class_human = vmm['Class'] || vmmn['Class']
+      device_human = vmm['Device'] || vmmn['Device']
       vendor_human = vmm['Vendor'] || vmmn['Vendor']
 
       # Skip if we can't identify the device
-      next unless class_human && vendor_human
+      next unless class_human && vendor_human && device_human
 
-      # Extract hex IDs (prefer vmmn, fallback to vmm)
-      class_hex = vmmn['Class'] || vmm['Class']
-      device_hex = vmmn['Device'] || vmm['Device']
-      vendor_hex = vmmn['Vendor'] || vmm['Vendor']
-      svendor_hex = vmmn['SVendor'] || vmm['SVendor']
-      sdevice_hex = vmmn['SDevice'] || vmm['SDevice']
+      # Extract numeric IDs exclusively from vmmn; vmm does not carry hex codes.
+      # If vmmn has no entry for this slot, hex IDs will be nil and the slot will
+      # be excluded from by_id and all installed_* lists (see guard below).
+      class_hex   = vmmn['Class']
+      device_hex  = vmmn['Device']
+      vendor_hex  = vmmn['Vendor']
+      svendor_hex = vmmn['SVendor'] if vmmn['SVendor']
+      sdevice_hex = vmmn['SDevice'] if vmmn['SDevice']
+
+      # Normalize hex IDs to lowercase for consistency across all output structures.
+      # All five may be nil if vmmn had no entry for this slot; the guard below
+      # (next unless class_hex && vendor_hex && device_hex) handles that case.
+      class_hex   = class_hex.downcase
+      device_hex  = device_hex.downcase
+      vendor_hex  = vendor_hex.downcase
+      svendor_hex = svendor_hex.downcase if svendor_hex
+      sdevice_hex = sdevice_hex.downcase if sdevice_hex
 
       # Build by_name properties object
       by_name_props = {}
 
       # Add human-readable fields from vmm (if available)
-      by_name_props['Class'] = vmm['Class'] if vmm['Class']
-      by_name_props['Device'] = vmm['Device'] if vmm['Device']
+      by_name_props['Class'] = class_human
+      by_name_props['Device'] = device_human
+      by_name_props['Vendor'] = vendor_human
       by_name_props['SVendor'] = vmm['SVendor'] if vmm['SVendor']
       by_name_props['SDevice'] = vmm['SDevice'] if vmm['SDevice']
 
-      # Add hex ID fields
-      by_name_props['ClassID'] = class_hex if class_hex
-      by_name_props['DeviceID'] = device_hex if device_hex
+      # Add hex ID fields (already normalized to lowercase above)
+      by_name_props['ClassID'] = class_hex
+      by_name_props['DeviceID'] = device_hex
+      by_name_props['VendorID'] = vendor_hex
       by_name_props['SVendorID'] = svendor_hex if svendor_hex
       by_name_props['SDeviceID'] = sdevice_hex if sdevice_hex
 
@@ -203,28 +224,24 @@ Facter.add(:lspci) do
       by_name[class_human][vendor_human] ||= {}
       by_name[class_human][vendor_human][slot] = by_name_props
 
-      # Populate by_id tree (only if we have hex IDs for both vendor and device)
-      next unless vendor_hex && device_hex
+      # Populate by_id tree (only if we have hex IDs)
+      next unless class_hex && vendor_hex && device_hex
 
-      # Normalize to lowercase hex
-      class_hex_lower = class_hex.downcase
-      device_hex_lower = device_hex.downcase
-      vendor_hex_lower = vendor_hex.downcase
+      # Build flat ID lists; dedup/sort applied once at the end
+      installed_classes_by_id << class_hex
+      installed_devices_by_id << "#{vendor_hex}.#{device_hex}"
+      installed_vendors_by_id << vendor_hex
 
-      # Setup our lists by_id
-      installed_classes_by_id << class_hex_lower
-      installed_devices_by_id << "#{vendor_hex_lower}.#{device_hex_lower}"
-      installed_vendors_by_id << vendor_hex_lower
+      installed_devices_by_class_id[class_hex] ||= []
+      installed_devices_by_class_id[class_hex] << "#{vendor_hex}.#{device_hex}"
 
-      (installed_devices_by_class_id[class_hex_lower] ||= []) << "#{vendor_hex_lower}.#{device_hex_lower}"
-      (installed_vendors_by_class_id[class_hex_lower] ||= []) << vendor_hex_lower
-      installed_devices_by_class_id[class_hex_lower] = installed_devices_by_class_id[class_hex_lower].sort.uniq
-      installed_vendors_by_class_id[class_hex_lower] = installed_vendors_by_class_id[class_hex_lower].sort.uniq
+      installed_vendors_by_class_id[class_hex] ||= []
+      installed_vendors_by_class_id[class_hex] << vendor_hex
 
-      by_id[vendor_hex_lower] ||= {}
-      by_id[vendor_hex_lower][device_hex_lower] ||= []
-      by_id[vendor_hex_lower][device_hex_lower] << slot
-      by_id[vendor_hex_lower][device_hex_lower] = by_id[vendor_hex_lower][device_hex_lower]
+      by_id[vendor_hex] ||= {}
+      by_id[vendor_hex][device_hex] ||= []
+      by_id[vendor_hex][device_hex] << slot
+      by_id[vendor_hex][device_hex] = by_id[vendor_hex][device_hex].sort.uniq
     end
 
     {
@@ -232,9 +249,9 @@ Facter.add(:lspci) do
       'by_name' => sort_hash_deep(by_name),
       'installed_classes_by_id' => installed_classes_by_id.sort.uniq,
       'installed_devices_by_id' => installed_devices_by_id.sort.uniq,
-      'installed_devices_by_class_id' => installed_devices_by_class_id,
+      'installed_devices_by_class_id' => dedupe_and_sort_arrays(installed_devices_by_class_id),
       'installed_vendors_by_id' => installed_vendors_by_id.sort.uniq,
-      'installed_vendors_by_class_id' => installed_vendors_by_class_id,
+      'installed_vendors_by_class_id' => dedupe_and_sort_arrays(installed_vendors_by_class_id),
     }
   end
 end
