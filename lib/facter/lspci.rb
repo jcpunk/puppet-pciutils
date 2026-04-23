@@ -3,20 +3,29 @@
 # @summary Returns PCI device information from `lspci`.
 #
 #   The fact runs `lspci -vmm` (human‑readable) and `lspci -vmmn` (hex codes)
-#   and builds a three‑part hash:
+#   and builds a multi‑part hash:
 #
 #   * `by_name` - hierarchical tree keyed by human‑readable class and vendor,
-#     ending in a slot hash with the device’s properties.
+#     ending in a slot hash with the device's properties.
 #   * `by_id`   - tree keyed by numeric vendor/device IDs, each leaf being an
-#     array of slots that match the ID pair.
-#   * `installed_devices_by_id` - flat, alphabetically sorted array of
+#     sorted list of unique slots that match the ID pair.
+#   * `installed_classes_by_id` - sorted, deduplicated array of
+#     `<class_hex>` strings for all detected devices
+#   * `installed_devices_by_id` - sorted, deduplicated array of
 #     `<vendor_hex>.<device_hex>` strings for all detected devices.
+#   * `installed_devices_by_class_id` - hierarchical tree keyed by class ID,
+#     each leaf being a sorted, deduplicated array of device IDs.
+#   * `installed_vendors_by_class_id` - hierarchical tree keyed by class ID,
+#     each leaf being a sorted, deduplicated array of vendor IDs.
 #
 # @return [Hash] Structured PCI information with the following keys:
 #   * `by_name`                 - `Hash[String => Hash[String => Hash[String => Hash]]]`
 #   * `by_id`                   - `Hash[String => Hash[String => Array[String]]]`
+#   * `installed_classes_by_id` - `Array[String]`
 #   * `installed_devices_by_id` - `Array[String]`
+#   * `installed_devices_by_class_id` - `Hash[String => Array[String]]`
 #   * `installed_vendors_by_id` - `Array[String]`
+#   * `installed_vendors_by_class_id` - `Hash[String => Array[String]]`
 #
 # @example Sample output (truncated)
 #   {
@@ -25,7 +34,7 @@
 #         "Intel Corporation" => {
 #           "0000:00:1f.6" => {
 #             "Device"   => "Ethernet Connection I219-LM",
-#             "DeviceID" => "0x15d8",
+#             "DeviceID" => "15d8",
 #             "Driver"   => "e1000e",
 #             ...
 #           }
@@ -35,20 +44,32 @@
 #     "by_id" => {
 #       "8086" => { "15d8" => ["0000:00:1f.6"] }
 #     },
+#     "installed_classes_by_id" => ["200"]
 #     "installed_devices_by_id" => ["8086.15d8"]
+#     "installed_devices_by_class_id" => {
+#       "0200" => ["8086.15d8"]
+#     },
 #     "installed_vendors_by_id" => ["8086"]
+#     "installed_vendors_by_class_id" => {
+#       "0200" => ["8086"]
+#     }
 #   }
 #
 Facter.add(:lspci) do
   confine kernel: 'Linux'
 
   # Recursively sort all keys in nested hashes
+  # Also sorts and dedupes any arrays found
   # Returns new hash with keys sorted at all levels
-  def sort_hash_deep(hash)
-    return hash unless hash.is_a?(Hash)
-
-    hash.sort.to_h do |key, value|
-      [key, sort_hash_deep(value)]
+  def sort_hash_deep(value)
+    if value.is_a?(Hash)
+      value.sort.to_h do |key, val|
+        [key, sort_hash_deep(val)]
+      end
+    elsif value.is_a?(Array)
+      value.uniq.sort
+    else
+      value
     end
   end
 
@@ -120,8 +141,11 @@ Facter.add(:lspci) do
 
     by_name = {}
     by_id   = {}
+    installed_classes_by_id = []
     installed_devices_by_id = []
     installed_vendors_by_id = []
+    installed_devices_by_class_id = {}
+    installed_vendors_by_class_id = {}
 
     # Union of slots from both outputs (gracefully handles missing data)
     all_slots = (by_slot_vmm.keys | by_slot_vmmn.keys)
@@ -139,6 +163,7 @@ Facter.add(:lspci) do
       next unless class_human && vendor_human
 
       # Extract hex IDs (prefer vmmn, fallback to vmm)
+      class_hex = vmmn['Class'] || vmm['Class']
       device_hex = vmmn['Device'] || vmm['Device']
       vendor_hex = vmmn['Vendor'] || vmm['Vendor']
       svendor_hex = vmmn['SVendor'] || vmm['SVendor']
@@ -148,11 +173,13 @@ Facter.add(:lspci) do
       by_name_props = {}
 
       # Add human-readable fields from vmm (if available)
+      by_name_props['Class'] = vmm['Class'] if vmm['Class']
       by_name_props['Device'] = vmm['Device'] if vmm['Device']
       by_name_props['SVendor'] = vmm['SVendor'] if vmm['SVendor']
       by_name_props['SDevice'] = vmm['SDevice'] if vmm['SDevice']
 
       # Add hex ID fields
+      by_name_props['ClassID'] = class_hex if class_hex
       by_name_props['DeviceID'] = device_hex if device_hex
       by_name_props['SVendorID'] = svendor_hex if svendor_hex
       by_name_props['SDeviceID'] = sdevice_hex if sdevice_hex
@@ -168,7 +195,7 @@ Facter.add(:lspci) do
       module_value = vmm['Module'] || vmmn['Module']
 
       if module_value
-        by_name_props['Module'] = Array(module_value).map(&:to_s).sort
+        by_name_props['Module'] = Array(module_value).map(&:to_s).sort.uniq
       end
 
       # Populate by_name tree
@@ -178,23 +205,36 @@ Facter.add(:lspci) do
 
       # Populate by_id tree (only if we have hex IDs for both vendor and device)
       next unless vendor_hex && device_hex
-      # Normalize to lowercase hex
-      vendor_hex_lower = vendor_hex.downcase
-      device_hex_lower = device_hex.downcase
 
+      # Normalize to lowercase hex
+      class_hex_lower = class_hex.downcase
+      device_hex_lower = device_hex.downcase
+      vendor_hex_lower = vendor_hex.downcase
+
+      # Setup our lists by_id
+      installed_classes_by_id << class_hex_lower
       installed_devices_by_id << "#{vendor_hex_lower}.#{device_hex_lower}"
       installed_vendors_by_id << vendor_hex_lower
+
+      (installed_devices_by_class_id[class_hex_lower] ||= []) << "#{vendor_hex_lower}.#{device_hex_lower}"
+      (installed_vendors_by_class_id[class_hex_lower] ||= []) << vendor_hex_lower
+      installed_devices_by_class_id[class_hex_lower] = installed_devices_by_class_id[class_hex_lower].sort.uniq
+      installed_vendors_by_class_id[class_hex_lower] = installed_vendors_by_class_id[class_hex_lower].sort.uniq
 
       by_id[vendor_hex_lower] ||= {}
       by_id[vendor_hex_lower][device_hex_lower] ||= []
       by_id[vendor_hex_lower][device_hex_lower] << slot
+      by_id[vendor_hex_lower][device_hex_lower] = by_id[vendor_hex_lower][device_hex_lower]
     end
 
     {
       'by_id'   => sort_hash_deep(by_id),
       'by_name' => sort_hash_deep(by_name),
+      'installed_classes_by_id' => installed_classes_by_id.sort.uniq,
       'installed_devices_by_id' => installed_devices_by_id.sort.uniq,
+      'installed_devices_by_class_id' => installed_devices_by_class_id,
       'installed_vendors_by_id' => installed_vendors_by_id.sort.uniq,
+      'installed_vendors_by_class_id' => installed_vendors_by_class_id,
     }
   end
 end
