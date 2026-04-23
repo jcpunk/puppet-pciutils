@@ -1,0 +1,17 @@
+Slot:	0000:00:01.0
+Class:	Host bridge
+Vendor:	Intel Corporation
+Device:	Some DRAM Controller
+SVendor:	Red Hat, Inc.
+SDevice:	QEMU Virtual Machine
+ProgIf:	00
+Module:	intel_agp
+
+Slot:	0000:00:02.0
+Class:	Ethernet controller
+Vendor:	Intel Corporation
+Device:	Fast Ethernet Adapter
+ProgIf:	00
+Driver:	e1000e
+Module:	e1000e
+

@@ -170,19 +170,21 @@ Facter.add(:lspci) do
       # Skip if we can't identify the device
       next unless class_human && vendor_human && device_human
 
-      # Extract numeric IDs: vmmn is the primary source as it contains hex codes
-      # (e.g. "8086"); vmm is the fallback if vmmn output is unavailable
-      class_hex = vmmn['Class'] || vmm['Class']
-      device_hex = vmmn['Device'] || vmm['Device']
-      vendor_hex = vmmn['Vendor'] || vmm['Vendor']
-      svendor_hex = vmmn['SVendor'] || vmm['SVendor']
-      sdevice_hex = vmmn['SDevice'] || vmm['SDevice']
+      # Extract numeric IDs exclusively from vmmn; vmm does not carry hex codes.
+      # If vmmn has no entry for this slot, hex IDs will be nil and the slot will
+      # be excluded from by_id and all installed_* lists (see guard below).
+      class_hex   = vmmn['Class']
+      device_hex  = vmmn['Device']
+      vendor_hex  = vmmn['Vendor']
+      svendor_hex = vmmn['SVendor'] if vmmn['SVendor']
+      sdevice_hex = vmmn['SDevice'] if vmmn['SDevice']
 
-      # Normalize all hex IDs to lowercase once here for consistency across all
-      # output structures. Mandatory fields need no guard; optional fields may be nil.
-      class_hex = class_hex.downcase
-      device_hex = device_hex.downcase
-      vendor_hex = vendor_hex.downcase
+      # Normalize hex IDs to lowercase for consistency across all output structures.
+      # All five may be nil if vmmn had no entry for this slot; the guard below
+      # (next unless class_hex && vendor_hex && device_hex) handles that case.
+      class_hex   = class_hex.downcase
+      device_hex  = device_hex.downcase
+      vendor_hex  = vendor_hex.downcase
       svendor_hex = svendor_hex.downcase if svendor_hex
       sdevice_hex = sdevice_hex.downcase if sdevice_hex
 
@@ -230,8 +232,11 @@ Facter.add(:lspci) do
       installed_devices_by_id << "#{vendor_hex}.#{device_hex}"
       installed_vendors_by_id << vendor_hex
 
-      (installed_devices_by_class_id[class_hex] ||= []) << "#{vendor_hex}.#{device_hex}"
-      (installed_vendors_by_class_id[class_hex] ||= []) << vendor_hex
+      installed_devices_by_class_id[class_hex] ||= []
+      installed_devices_by_class_id[class_hex] << "#{vendor_hex}.#{device_hex}"
+
+      installed_vendors_by_class_id[class_hex] ||= []
+      installed_vendors_by_class_id[class_hex] << vendor_hex
 
       by_id[vendor_hex] ||= {}
       by_id[vendor_hex][device_hex] ||= []

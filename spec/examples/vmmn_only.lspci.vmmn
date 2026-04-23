@@ -1,0 +1,17 @@
+Slot:	0000:00:01.0
+Class:	0600
+Vendor:	8086
+Device:	29c0
+SVendor:	1af4
+SDevice:	1100
+ProgIf:	00
+Module:	intel_agp
+
+Slot:	0000:00:02.0
+Class:	0200
+Vendor:	1af4
+Device:	1041
+ProgIf:	00
+Driver:	virtio-pci
+Module:	virtio_pci
+
