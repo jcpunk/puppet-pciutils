@@ -99,6 +99,7 @@ Facter.add(:lspci) do
       key, value = line.split(':', 2)
       next if value.nil?
 
+      key = key.strip
       value = value.strip
 
       # Track slot for indexing
@@ -123,6 +124,12 @@ Facter.add(:lspci) do
     end
 
     blocks
+  end
+
+  # Finalize a flat Hash[String => Array] by sorting and deduplicating each array
+  # Returns a new hash; does not modify the original
+  def dedupe_and_sort_arrays(hash)
+    hash.transform_values { |value| value.sort.uniq }
   end
 
   setcode do
@@ -154,8 +161,8 @@ Facter.add(:lspci) do
       vmm = by_slot_vmm[slot] || {}
       vmmn = by_slot_vmmn[slot] || {}
 
-      # Extract keys for by_name tree structure
-      # Prefer human-readable from vmm, fallback to vmmn (which may be hex)
+      # Extract human-readable names: vmm is the primary source as it contains
+      # descriptive strings (e.g. "Intel Corporation"); vmmn is the fallback
       class_human = vmm['Class'] || vmmn['Class']
       device_human = vmm['Device'] || vmmn['Device']
       vendor_human = vmm['Vendor'] || vmmn['Vendor']
@@ -163,12 +170,21 @@ Facter.add(:lspci) do
       # Skip if we can't identify the device
       next unless class_human && vendor_human && device_human
 
-      # Extract hex IDs (prefer vmmn, fallback to vmm)
+      # Extract numeric IDs: vmmn is the primary source as it contains hex codes
+      # (e.g. "8086"); vmm is the fallback if vmmn output is unavailable
       class_hex = vmmn['Class'] || vmm['Class']
       device_hex = vmmn['Device'] || vmm['Device']
       vendor_hex = vmmn['Vendor'] || vmm['Vendor']
       svendor_hex = vmmn['SVendor'] || vmm['SVendor']
       sdevice_hex = vmmn['SDevice'] || vmm['SDevice']
+
+      # Normalize all hex IDs to lowercase once here for consistency across all
+      # output structures. Mandatory fields need no guard; optional fields may be nil.
+      class_hex = class_hex.downcase
+      device_hex = device_hex.downcase
+      vendor_hex = vendor_hex.downcase
+      svendor_hex = svendor_hex.downcase if svendor_hex
+      sdevice_hex = sdevice_hex.downcase if sdevice_hex
 
       # Build by_name properties object
       by_name_props = {}
@@ -180,10 +196,10 @@ Facter.add(:lspci) do
       by_name_props['SVendor'] = vmm['SVendor'] if vmm['SVendor']
       by_name_props['SDevice'] = vmm['SDevice'] if vmm['SDevice']
 
-      # Add hex ID fields
-      by_name_props['ClassID'] = class_hex.downcase
-      by_name_props['DeviceID'] = device_hex.downcase
-      by_name_props['VendorID'] = vendor_hex.downcase
+      # Add hex ID fields (already normalized to lowercase above)
+      by_name_props['ClassID'] = class_hex
+      by_name_props['DeviceID'] = device_hex
+      by_name_props['VendorID'] = vendor_hex
       by_name_props['SVendorID'] = svendor_hex if svendor_hex
       by_name_props['SDeviceID'] = sdevice_hex if sdevice_hex
 
@@ -209,25 +225,18 @@ Facter.add(:lspci) do
       # Populate by_id tree (only if we have hex IDs)
       next unless class_hex && vendor_hex && device_hex
 
-      # Normalize to lowercase hex
-      class_hex_lower = class_hex.downcase
-      device_hex_lower = device_hex.downcase
-      vendor_hex_lower = vendor_hex.downcase
+      # Build flat ID lists; dedup/sort applied once at the end
+      installed_classes_by_id << class_hex
+      installed_devices_by_id << "#{vendor_hex}.#{device_hex}"
+      installed_vendors_by_id << vendor_hex
 
-      # Setup our lists by_id
-      installed_classes_by_id << class_hex_lower
-      installed_devices_by_id << "#{vendor_hex_lower}.#{device_hex_lower}"
-      installed_vendors_by_id << vendor_hex_lower
+      (installed_devices_by_class_id[class_hex] ||= []) << "#{vendor_hex}.#{device_hex}"
+      (installed_vendors_by_class_id[class_hex] ||= []) << vendor_hex
 
-      (installed_devices_by_class_id[class_hex_lower] ||= []) << "#{vendor_hex_lower}.#{device_hex_lower}"
-      (installed_vendors_by_class_id[class_hex_lower] ||= []) << vendor_hex_lower
-      installed_devices_by_class_id[class_hex_lower] = installed_devices_by_class_id[class_hex_lower].sort.uniq
-      installed_vendors_by_class_id[class_hex_lower] = installed_vendors_by_class_id[class_hex_lower].sort.uniq
-
-      by_id[vendor_hex_lower] ||= {}
-      by_id[vendor_hex_lower][device_hex_lower] ||= []
-      by_id[vendor_hex_lower][device_hex_lower] << slot
-      by_id[vendor_hex_lower][device_hex_lower] = by_id[vendor_hex_lower][device_hex_lower]
+      by_id[vendor_hex] ||= {}
+      by_id[vendor_hex][device_hex] ||= []
+      by_id[vendor_hex][device_hex] << slot
+      by_id[vendor_hex][device_hex] = by_id[vendor_hex][device_hex].sort.uniq
     end
 
     {
@@ -235,9 +244,9 @@ Facter.add(:lspci) do
       'by_name' => sort_hash_deep(by_name),
       'installed_classes_by_id' => installed_classes_by_id.sort.uniq,
       'installed_devices_by_id' => installed_devices_by_id.sort.uniq,
-      'installed_devices_by_class_id' => installed_devices_by_class_id,
+      'installed_devices_by_class_id' => dedupe_and_sort_arrays(installed_devices_by_class_id),
       'installed_vendors_by_id' => installed_vendors_by_id.sort.uniq,
-      'installed_vendors_by_class_id' => installed_vendors_by_class_id,
+      'installed_vendors_by_class_id' => dedupe_and_sort_arrays(installed_vendors_by_class_id),
     }
   end
 end
