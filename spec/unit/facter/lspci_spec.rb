@@ -23,8 +23,10 @@ describe :lspci, type: :fact do
     before :each do
       allow(Facter::Core::Execution).to receive(:which).with('lspci').and_return(true)
       allow(Facter::Core::Execution).to receive(:execute).and_call_original
-      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmm -k -b -D', anything).and_return(File.read('spec/examples/libvirt.lspci.vmm'))
-      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmmn -k -b -D', anything).and_return(File.read('spec/examples/libvirt.lspci.vmmn'))
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmm -k -b -D',
+                                                               anything).and_return(File.read('spec/examples/libvirt.lspci.vmm'))
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmmn -k -b -D',
+                                                               anything).and_return(File.read('spec/examples/libvirt.lspci.vmmn'))
     end
 
     it {
@@ -38,22 +40,22 @@ describe :lspci, type: :fact do
               '1044' => ['0000:06:00.0'],
               '1045' => ['0000:05:00.0'],
               '1048' => ['0000:07:00.0'],
-              '1050' => ['0000:00:01.0'],
+              '1050' => ['0000:00:01.0']
             },
             '1b36' => {
               '000c' => ['0000:00:02.0', '0000:00:02.1', '0000:00:02.2', '0000:00:02.3',
                          '0000:00:02.4', '0000:00:02.5', '0000:00:02.6', '0000:00:02.7',
                          '0000:00:03.0', '0000:00:03.1', '0000:00:03.2', '0000:00:03.3',
                          '0000:00:03.4', '0000:00:03.5'],
-              '000d' => ['0000:02:00.0'],
+              '000d' => ['0000:02:00.0']
             },
             '8086' => {
               '2918' => ['0000:00:1f.0'],
               '2922' => ['0000:00:1f.2'],
               '2930' => ['0000:00:1f.3'],
               '293e' => ['0000:00:1b.0'],
-              '29c0' => ['0000:00:00.0'],
-            },
+              '29c0' => ['0000:00:00.0']
+            }
           },
           'by_name' => {
             'Audio device' => {
@@ -71,8 +73,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Intel Corporation',
+                  'VendorID' => '8086'
+                }
+              }
             },
             'Communication controller' => {
               'Red Hat, Inc.' => {
@@ -90,8 +94,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
+                }
+              }
             },
             'Ethernet controller' => {
               'Red Hat, Inc.' => {
@@ -109,8 +115,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
+                }
+              }
             },
             'Host bridge' => {
               'Intel Corporation' => {
@@ -125,8 +133,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Intel Corporation',
+                  'VendorID' => '8086'
+                }
+              }
             },
             'ISA bridge' => {
               'Intel Corporation' => {
@@ -143,8 +153,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Intel Corporation',
+                  'VendorID' => '8086'
+                }
+              }
             },
             'PCI bridge' => {
               'Red Hat, Inc.' => {
@@ -160,177 +172,205 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '0000',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
                 },
-                 '0000:00:02.1' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:02.2' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:02.3' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:02.4' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:02.5' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:02.6' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:02.7' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:03.0' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:03.1' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:03.2' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:03.3' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:03.4' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-                 '0000:00:03.5' => {
-                   'Class' => 'PCI bridge',
-                   'ClassID' => '0604',
-                   'Device' => 'QEMU PCIe Root port',
-                   'DeviceID' => '000c',
-                   'Driver' => 'pcieport',
-                   'Module' => ['shpchp'],
-                   'ProgIf' => '00',
-                   'SDevice' => 'Device 0000',
-                   'SDeviceID' => '0000',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1b36',
-                 },
-              },
+                '0000:00:02.1' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:02.2' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:02.3' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:02.4' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:02.5' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:02.6' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:02.7' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:03.0' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:03.1' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:03.2' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:03.3' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:03.4' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                },
+                '0000:00:03.5' => {
+                  'Class' => 'PCI bridge',
+                  'ClassID' => '0604',
+                  'Device' => 'QEMU PCIe Root port',
+                  'DeviceID' => '000c',
+                  'Driver' => 'pcieport',
+                  'Module' => ['shpchp'],
+                  'ProgIf' => '00',
+                  'SDevice' => 'Device 0000',
+                  'SDeviceID' => '0000',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1b36',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                }
+              }
             },
             'SATA controller' => {
               'Intel Corporation' => {
@@ -347,58 +387,66 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Intel Corporation',
+                  'VendorID' => '8086'
+                }
+              }
             },
-             'SCSI storage controller' => {
-               'Red Hat, Inc.' => {
-                 '0000:04:00.0' => {
-                   'Class' => 'SCSI storage controller',
-                   'ClassID' => '0100',
-                   'Device' => 'Virtio 1.0 block device',
-                   'DeviceID' => '1042',
-                   'Driver' => 'virtio-pci',
-                   'Module' => ['virtio_pci'],
-                   'PhySlot' => '0-4',
-                   'ProgIf' => '00',
-                   'Rev' => '01',
-                   'SDevice' => 'QEMU',
-                   'SDeviceID' => '1100',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1af4',
-                 },
-                 '0000:07:00.0' => {
-                   'Class' => 'SCSI storage controller',
-                   'ClassID' => '0100',
-                   'Device' => 'Virtio 1.0 SCSI',
-                   'DeviceID' => '1048',
-                   'Driver' => 'virtio-pci',
-                   'Module' => ['virtio_pci'],
-                   'PhySlot' => '0-7',
-                   'ProgIf' => '00',
-                   'Rev' => '01',
-                   'SDevice' => 'QEMU',
-                   'SDeviceID' => '1100',
-                   'SVendor' => 'Red Hat, Inc.',
-                   'SVendorID' => '1af4',
-                 },
-                 '0000:08:00.0' => {
-                   'Class' => 'SCSI storage controller',
-                   'ClassID' => '0100',
-                   'Device' => 'Virtio 1.0 block device',
-                   'DeviceID' => '1042',
-                   'Driver' => 'virtio-pci',
-                   'Module' => ['virtio_pci'],
-                   'PhySlot' => '0-8',
-                   'ProgIf' => '00',
-                   'Rev' => '01',
-                   'SDevice' => 'QEMU',
-                   'SDeviceID' => '1100',
+            'SCSI storage controller' => {
+              'Red Hat, Inc.' => {
+                '0000:04:00.0' => {
+                  'Class' => 'SCSI storage controller',
+                  'ClassID' => '0100',
+                  'Device' => 'Virtio 1.0 block device',
+                  'DeviceID' => '1042',
+                  'Driver' => 'virtio-pci',
+                  'Module' => ['virtio_pci'],
+                  'PhySlot' => '0-4',
+                  'ProgIf' => '00',
+                  'Rev' => '01',
+                  'SDevice' => 'QEMU',
+                  'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                 },
-               },
-             },
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
+                },
+                '0000:07:00.0' => {
+                  'Class' => 'SCSI storage controller',
+                  'ClassID' => '0100',
+                  'Device' => 'Virtio 1.0 SCSI',
+                  'DeviceID' => '1048',
+                  'Driver' => 'virtio-pci',
+                  'Module' => ['virtio_pci'],
+                  'PhySlot' => '0-7',
+                  'ProgIf' => '00',
+                  'Rev' => '01',
+                  'SDevice' => 'QEMU',
+                  'SDeviceID' => '1100',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1af4',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
+                },
+                '0000:08:00.0' => {
+                  'Class' => 'SCSI storage controller',
+                  'ClassID' => '0100',
+                  'Device' => 'Virtio 1.0 block device',
+                  'DeviceID' => '1042',
+                  'Driver' => 'virtio-pci',
+                  'Module' => ['virtio_pci'],
+                  'PhySlot' => '0-8',
+                  'ProgIf' => '00',
+                  'Rev' => '01',
+                  'SDevice' => 'QEMU',
+                  'SDeviceID' => '1100',
+                  'SVendor' => 'Red Hat, Inc.',
+                  'SVendorID' => '1af4',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
+                }
+              }
+            },
             'SMBus' => {
               'Intel Corporation' => {
                 '0000:00:1f.3' => {
@@ -414,8 +462,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Intel Corporation',
+                  'VendorID' => '8086'
+                }
+              }
             },
             'USB controller' => {
               'Red Hat, Inc.' => {
@@ -433,8 +483,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1b36'
+                }
+              }
             },
             'Unclassified device [00ff]' => {
               'Red Hat, Inc.' => {
@@ -452,6 +504,8 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
                 },
                 '0000:06:00.0' => {
                   'Class' => 'Unclassified device [00ff]',
@@ -467,8 +521,10 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
+                }
+              }
             },
             'VGA compatible controller' => {
               'Red Hat, Inc.' => {
@@ -485,9 +541,11 @@ describe :lspci, type: :fact do
                   'SDeviceID' => '1100',
                   'SVendor' => 'Red Hat, Inc.',
                   'SVendorID' => '1af4',
-                },
-              },
-            },
+                  'Vendor' => 'Red Hat, Inc.',
+                  'VendorID' => '1af4'
+                }
+              }
+            }
           },
           'installed_classes_by_id' => [
             '00ff',
@@ -601,7 +659,7 @@ describe :lspci, type: :fact do
             '0c05' => [
               '8086',
             ]
-          },
+          }
         },
       )
     }

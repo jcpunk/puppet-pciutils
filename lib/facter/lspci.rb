@@ -157,10 +157,11 @@ Facter.add(:lspci) do
       # Extract keys for by_name tree structure
       # Prefer human-readable from vmm, fallback to vmmn (which may be hex)
       class_human = vmm['Class'] || vmmn['Class']
+      device_human = vmm['Device'] || vmmn['Device']
       vendor_human = vmm['Vendor'] || vmmn['Vendor']
 
       # Skip if we can't identify the device
-      next unless class_human && vendor_human
+      next unless class_human && vendor_human && device_human
 
       # Extract hex IDs (prefer vmmn, fallback to vmm)
       class_hex = vmmn['Class'] || vmm['Class']
@@ -173,14 +174,16 @@ Facter.add(:lspci) do
       by_name_props = {}
 
       # Add human-readable fields from vmm (if available)
-      by_name_props['Class'] = vmm['Class'] if vmm['Class']
-      by_name_props['Device'] = vmm['Device'] if vmm['Device']
+      by_name_props['Class'] = class_human
+      by_name_props['Device'] = device_human
+      by_name_props['Vendor'] = vendor_human
       by_name_props['SVendor'] = vmm['SVendor'] if vmm['SVendor']
       by_name_props['SDevice'] = vmm['SDevice'] if vmm['SDevice']
 
       # Add hex ID fields
-      by_name_props['ClassID'] = class_hex if class_hex
-      by_name_props['DeviceID'] = device_hex if device_hex
+      by_name_props['ClassID'] = class_hex.downcase
+      by_name_props['DeviceID'] = device_hex.downcase
+      by_name_props['VendorID'] = vendor_hex.downcase
       by_name_props['SVendorID'] = svendor_hex if svendor_hex
       by_name_props['SDeviceID'] = sdevice_hex if sdevice_hex
 
@@ -203,8 +206,8 @@ Facter.add(:lspci) do
       by_name[class_human][vendor_human] ||= {}
       by_name[class_human][vendor_human][slot] = by_name_props
 
-      # Populate by_id tree (only if we have hex IDs for both vendor and device)
-      next unless vendor_hex && device_hex
+      # Populate by_id tree (only if we have hex IDs)
+      next unless class_hex && vendor_hex && device_hex
 
       # Normalize to lowercase hex
       class_hex_lower = class_hex.downcase
