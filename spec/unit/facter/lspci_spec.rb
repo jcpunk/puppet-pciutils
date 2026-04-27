@@ -221,9 +221,9 @@ describe :lspci, type: :fact do
         },
         '0x1b36' => {
           '0x000c' => ['0000:00:02.0', '0000:00:02.1', '0000:00:02.2', '0000:00:02.3',
-                     '0000:00:02.4', '0000:00:02.5', '0000:00:02.6', '0000:00:02.7',
-                     '0000:00:03.0', '0000:00:03.1', '0000:00:03.2', '0000:00:03.3',
-                     '0000:00:03.4', '0000:00:03.5'],
+                       '0000:00:02.4', '0000:00:02.5', '0000:00:02.6', '0000:00:02.7',
+                       '0000:00:03.0', '0000:00:03.1', '0000:00:03.2', '0000:00:03.3',
+                       '0000:00:03.4', '0000:00:03.5'],
           '0x000d' => ['0000:02:00.0'],
         },
         '0x8086' => {
@@ -779,6 +779,83 @@ describe :lspci, type: :fact do
         '0x0c03' => ['0x1b36'],
         '0x0c05' => ['0x8086'],
       )
+    end
+  end
+
+  context 'when vmmn is missing Class (required hex ID)' do
+    before :each do
+      allow(Facter::Core::Execution).to receive(:which).with('lspci').and_return(true)
+      allow(Facter::Core::Execution).to receive(:execute).and_call_original
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmm -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/partial_vmmn_missing_class.lspci.vmm'))
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmmn -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/partial_vmmn_missing_class.lspci.vmmn'))
+    end
+
+    it 'skips the slot (not spec-compliant) and returns nil' do
+      expect(fact.value).to be_nil
+    end
+
+    it 'does not crash with nil concatenation error' do
+      expect { fact.value }.not_to raise_error
+    end
+  end
+
+  context 'when vmmn is missing Vendor (required hex ID)' do
+    before :each do
+      allow(Facter::Core::Execution).to receive(:which).with('lspci').and_return(true)
+      allow(Facter::Core::Execution).to receive(:execute).and_call_original
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmm -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/partial_vmmn_missing_vendor.lspci.vmm'))
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmmn -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/partial_vmmn_missing_vendor.lspci.vmmn'))
+    end
+
+    it 'skips the slot (not spec-compliant) and returns nil' do
+      expect(fact.value).to be_nil
+    end
+
+    it 'does not crash with nil concatenation error' do
+      expect { fact.value }.not_to raise_error
+    end
+  end
+
+  context 'when vmmn is missing Device (required hex ID)' do
+    before :each do
+      allow(Facter::Core::Execution).to receive(:which).with('lspci').and_return(true)
+      allow(Facter::Core::Execution).to receive(:execute).and_call_original
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmm -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/partial_vmmn_missing_device.lspci.vmm'))
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmmn -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/partial_vmmn_missing_device.lspci.vmmn'))
+    end
+
+    it 'skips the slot (not spec-compliant) and returns nil' do
+      expect(fact.value).to be_nil
+    end
+
+    it 'does not crash with nil concatenation error' do
+      expect { fact.value }.not_to raise_error
+    end
+  end
+
+  context 'when vmmn contains empty string hex values' do
+    before :each do
+      allow(Facter::Core::Execution).to receive(:which).with('lspci').and_return(true)
+      allow(Facter::Core::Execution).to receive(:execute).and_call_original
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmm -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/empty_string_hex_values.lspci.vmm'))
+      allow(Facter::Core::Execution).to receive(:execute).with('lspci -vmmn -k -b -D',
+                                                                anything).and_return(File.read('spec/examples/empty_string_hex_values.lspci.vmmn'))
+    end
+
+    it 'rejects invalid hex values and returns nil' do
+      expect(fact.value).to be_nil
+    end
+
+    it 'does not create invalid 0x identifiers' do
+      result = fact.value
+      expect(result).to be_nil
     end
   end
 end

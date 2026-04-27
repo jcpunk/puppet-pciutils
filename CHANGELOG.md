@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 2.0.1
+
+**Bugfixes**
+
+- Some call paths could result in '`0x`' as the entire string
+
 ## Release 2.0.0
 
 **Breaking Change**
