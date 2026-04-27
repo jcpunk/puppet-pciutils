@@ -2,8 +2,13 @@
 
 # @summary Returns PCI device information from `lspci`.
 #
-#   The fact runs `lspci -vmm` (human‑readable) and `lspci -vmmn` (hex codes)
-#   and builds a multi‑part hash:
+# This fact returns a deterministic, machine-readable view of the system's PCI
+# topology, enabling downstream Puppet modules to make hardware-specific
+# decisions or generate inventory reports. It gracefully falls back when `lspci`
+# is unavailable or a device lacks a complete identifier set.
+#
+# The fact runs `lspci -vmm` (human‑readable) and `lspci -vmmn` (hex codes)
+# and builds a multi‑part hash:
 #
 #   * `by_name` - hierarchical tree keyed by human‑readable class and vendor,
 #     ending in a slot hash with the device's properties.
@@ -126,6 +131,27 @@ Facter.add(:lspci) do
     blocks
   end
 
+  # Normalize hex value: strip, validate non-empty, lowercase, prepend 0x
+  # Returns nil if value is nil or empty after strip
+  def normalize_hex(value)
+    return nil if value.nil?
+    value = value.strip
+    return nil if value.empty?
+    '0x' + value.downcase
+  end
+
+  # Extract field with vmm->vmmn fallback and optional hex normalization
+  # For hex fields: always render as hex if present
+  # For text fields: use raw value
+  # Returns nil if field not in either source or empty after strip
+  def get_field(vmm, vmmn, field, hex: false)
+    value = vmm[field] || vmmn[field]
+    return nil if value.nil?
+    value = value.strip
+    return nil if value.empty?
+    hex ? '0x' + value.downcase : value
+  end
+
   # Finalize a flat Hash[String => Array] by sorting and deduplicating each array
   # Returns a new hash; does not modify the original
   def dedupe_and_sort_arrays(hash)
@@ -133,6 +159,7 @@ Facter.add(:lspci) do
   end
 
   setcode do
+    # return {} if we can't look for facts
     return {} unless Facter::Core::Execution.which('lspci')
 
     # Parse both outputs into intermediate hashes indexed by slot
@@ -161,65 +188,65 @@ Facter.add(:lspci) do
       vmm = by_slot_vmm[slot] || {}
       vmmn = by_slot_vmmn[slot] || {}
 
-      # Extract human-readable names: vmm is the primary source as it contains
-      # descriptive strings (e.g. "Intel Corporation"); vmmn is the fallback
-      class_human = vmm['Class'] || '0x' + vmmn['Class']
-      device_human = vmm['Device'] || '0x' + vmmn['Device']
-      vendor_human = vmm['Vendor'] || '0x' + vmmn['Vendor']
+      # Extract and validate required hex IDs from vmmn (spec-compliant devices must have these)
+      # vmmn is the source of truth for hex IDs; skip slot if missing any required field
+      class_hex = normalize_hex(vmmn['Class'])
+      vendor_hex = normalize_hex(vmmn['Vendor'])
+      device_hex = normalize_hex(vmmn['Device'])
 
-      # Skip if we can't identify the device
-      next unless class_human && vendor_human && device_human
+      # Skip non-spec-compliant devices: must have all three required hex IDs
+      next unless class_hex && vendor_hex && device_hex
 
-      # Extract numeric IDs exclusively from vmmn; vmm does not carry hex codes.
-      # If vmmn has no entry for this slot, hex IDs will be nil and the slot will
-      # be excluded from by_id and all installed_* lists (see guard below).
-      class_hex   = '0x' + vmmn['Class']
-      device_hex  = '0x' + vmmn['Device']
-      vendor_hex  = '0x' + vmmn['Vendor']
-      svendor_hex = '0x' + vmmn['SVendor'] if vmmn['SVendor']
-      sdevice_hex = '0x' + vmmn['SDevice'] if vmmn['SDevice']
+      # Extract human-readable names: vmm is primary source (descriptive strings)
+      # Fallback to vmmn hex strings with 0x prefix if vmm missing
+      class_human = vmm['Class'] || class_hex
+      vendor_human = vmm['Vendor'] || vendor_hex
+      device_human = vmm['Device'] || device_hex
 
-      # Normalize hex IDs to lowercase for consistency across all output structures.
-      # All five may be nil if vmmn had no entry for this slot; the guard below
-      # (next unless class_hex && vendor_hex && device_hex) handles that case.
-      class_hex   = class_hex.downcase
-      device_hex  = device_hex.downcase
-      vendor_hex  = vendor_hex.downcase
-      svendor_hex = svendor_hex.downcase if svendor_hex
-      sdevice_hex = sdevice_hex.downcase if sdevice_hex
+      # Extract optional hex IDs and normalize
+      svendor_hex = normalize_hex(vmmn['SVendor'])
+      sdevice_hex = normalize_hex(vmmn['SDevice'])
 
       # Build by_name properties object
       by_name_props = {}
 
-      # Add human-readable fields from vmm (if available)
+      # Add human-readable fields
       by_name_props['Class'] = class_human
       by_name_props['Device'] = device_human
       by_name_props['Vendor'] = vendor_human
-      by_name_props['SVendor'] = vmm['SVendor'] if vmm['SVendor']
-      by_name_props['SDevice'] = vmm['SDevice'] if vmm['SDevice']
 
-      # Add hex ID fields (already normalized to lowercase above)
+      # Add optional human-readable SVendor/SDevice
+      svendor_name = vmm['SVendor'] || svendor_hex
+      by_name_props['SVendor'] = svendor_name if svendor_name
+
+      sdevice_name = vmm['SDevice'] || sdevice_hex
+      by_name_props['SDevice'] = sdevice_name if sdevice_name
+
+      # Add hex ID fields (required)
       by_name_props['ClassID'] = class_hex
       by_name_props['DeviceID'] = device_hex
       by_name_props['VendorID'] = vendor_hex
+
+      # Add optional hex ID fields
       by_name_props['SVendorID'] = svendor_hex if svendor_hex
       by_name_props['SDeviceID'] = sdevice_hex if sdevice_hex
 
-      # These are always hex, but not always present
-      ['ProgIf', 'Rev'].each do |field|
-        value = vmm[field] || vmmn[field]
-        by_name_props[field] = '0x' + value.downcase if value
-      end
+      # Add optional hex fields (ProgIf, Rev) - always rendered as hex if present
+      progif_hex = get_field(vmm, vmmn, 'ProgIf', hex: true)
+      by_name_props['ProgIf'] = progif_hex if progif_hex
 
-      # Add other non-hex properties, if present
-      ['Driver', 'PhySlot'].each do |field|
-        value = vmm[field] || vmmn[field]
-        by_name_props[field] = value if value
-      end
+      rev_hex = get_field(vmm, vmmn, 'Rev', hex: true)
+      by_name_props['Rev'] = rev_hex if rev_hex
+
+      # Add optional text fields (Driver, PhySlot)
+      driver = vmm['Driver'] || vmmn['Driver']
+      by_name_props['Driver'] = driver if driver
+
+      physlot = vmm['PhySlot'] || vmmn['PhySlot']
+      by_name_props['PhySlot'] = physlot if physlot
 
       # Handle Module specially - always array if present
       module_value = vmm['Module'] || vmmn['Module']
-
       if module_value
         by_name_props['Module'] = Array(module_value).map(&:to_s).sort.uniq
       end
@@ -229,14 +256,9 @@ Facter.add(:lspci) do
       by_name[class_human][vendor_human] ||= {}
       by_name[class_human][vendor_human][slot] = by_name_props
 
-      # Build flat ID lists; dedup/sort applied once at the end
-      next unless class_hex
+      # Populate ID lists (safe because we already validated class_hex, vendor_hex, device_hex above)
       installed_classes_by_id << class_hex
-
-      next unless vendor_hex
       installed_vendors_by_id << vendor_hex
-
-      next unless device_hex
       installed_devices_by_id << "#{vendor_hex}.#{device_hex}"
 
       installed_devices_by_class_id[class_hex] ||= []
@@ -250,6 +272,9 @@ Facter.add(:lspci) do
       by_id[vendor_hex][device_hex] << slot
       by_id[vendor_hex][device_hex] = by_id[vendor_hex][device_hex].sort.uniq
     end
+
+    # Return {} if no devices found (graceful degradation)
+    return {} if by_name.empty?
 
     {
       'by_id'   => sort_hash_deep(by_id),
