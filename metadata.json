@@ -1,6 +1,6 @@
 {
   "name": "jcpunk-pciutils",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "author": "Pat Riehecky",
   "summary": "Manage pciutils",
   "license": "Apache-2.0",
@@ -17,37 +17,31 @@
     {
       "operatingsystem": "CentOS",
       "operatingsystemrelease": [
-
       ]
     },
     {
       "operatingsystem": "RedHat",
       "operatingsystemrelease": [
-
       ]
     },
     {
       "operatingsystem": "Debian",
       "operatingsystemrelease": [
-
       ]
     },
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-
       ]
     },
     {
       "operatingsystem": "Fedora",
       "operatingsystemrelease": [
-
       ]
     },
     {
       "operatingsystem": "SLES",
       "operatingsystemrelease": [
-
       ]
     }
   ],
