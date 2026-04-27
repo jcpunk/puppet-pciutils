@@ -163,9 +163,9 @@ Facter.add(:lspci) do
 
       # Extract human-readable names: vmm is the primary source as it contains
       # descriptive strings (e.g. "Intel Corporation"); vmmn is the fallback
-      class_human = vmm['Class'] || vmmn['Class']
-      device_human = vmm['Device'] || vmmn['Device']
-      vendor_human = vmm['Vendor'] || vmmn['Vendor']
+      class_human = vmm['Class'] || '0x' + vmmn['Class']
+      device_human = vmm['Device'] || '0x' + vmmn['Device']
+      vendor_human = vmm['Vendor'] || '0x' + vmmn['Vendor']
 
       # Skip if we can't identify the device
       next unless class_human && vendor_human && device_human
@@ -173,11 +173,11 @@ Facter.add(:lspci) do
       # Extract numeric IDs exclusively from vmmn; vmm does not carry hex codes.
       # If vmmn has no entry for this slot, hex IDs will be nil and the slot will
       # be excluded from by_id and all installed_* lists (see guard below).
-      class_hex   = vmmn['Class']
-      device_hex  = vmmn['Device']
-      vendor_hex  = vmmn['Vendor']
-      svendor_hex = vmmn['SVendor'] if vmmn['SVendor']
-      sdevice_hex = vmmn['SDevice'] if vmmn['SDevice']
+      class_hex   = '0x' + vmmn['Class']
+      device_hex  = '0x' + vmmn['Device']
+      vendor_hex  = '0x' + vmmn['Vendor']
+      svendor_hex = '0x' + vmmn['SVendor'] if vmmn['SVendor']
+      sdevice_hex = '0x' + vmmn['SDevice'] if vmmn['SDevice']
 
       # Normalize hex IDs to lowercase for consistency across all output structures.
       # All five may be nil if vmmn had no entry for this slot; the guard below
@@ -205,9 +205,14 @@ Facter.add(:lspci) do
       by_name_props['SVendorID'] = svendor_hex if svendor_hex
       by_name_props['SDeviceID'] = sdevice_hex if sdevice_hex
 
-      # Add other properties (present in both vmm and vmmn equally)
-      # Ensure Module is always an array if present
-      ['Driver', 'ProgIf', 'Rev', 'PhySlot'].each do |field|
+      # These are always hex, but not always present
+      ['ProgIf', 'Rev'].each do |field|
+        value = vmm[field] || vmmn[field]
+        by_name_props[field] = '0x' + value.downcase if value
+      end
+
+      # Add other non-hex properties, if present
+      ['Driver', 'PhySlot'].each do |field|
         value = vmm[field] || vmmn[field]
         by_name_props[field] = value if value
       end
@@ -224,13 +229,15 @@ Facter.add(:lspci) do
       by_name[class_human][vendor_human] ||= {}
       by_name[class_human][vendor_human][slot] = by_name_props
 
-      # Populate by_id tree (only if we have hex IDs)
-      next unless class_hex && vendor_hex && device_hex
-
       # Build flat ID lists; dedup/sort applied once at the end
+      next unless class_hex
       installed_classes_by_id << class_hex
-      installed_devices_by_id << "#{vendor_hex}.#{device_hex}"
+
+      next unless vendor_hex
       installed_vendors_by_id << vendor_hex
+
+      next unless device_hex
+      installed_devices_by_id << "#{vendor_hex}.#{device_hex}"
 
       installed_devices_by_class_id[class_hex] ||= []
       installed_devices_by_class_id[class_hex] << "#{vendor_hex}.#{device_hex}"
