@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 2.0.0
+
+**Breaking Change**
+
+- All hex fact values are now prefixed with `0x` to avoid facter casting to numeric
+
 ## Release 1.3.0
 
 **Features**
