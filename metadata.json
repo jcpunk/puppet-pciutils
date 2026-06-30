@@ -1,6 +1,6 @@
 {
   "name": "jcpunk-pciutils",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "author": "Pat Riehecky",
   "summary": "Manage pciutils",
   "license": "Apache-2.0",
@@ -15,34 +15,22 @@
   ],
   "operatingsystem_support": [
     {
-      "operatingsystem": "CentOS",
-      "operatingsystemrelease": [
-      ]
+      "operatingsystem": "Fedora"
     },
     {
-      "operatingsystem": "RedHat",
-      "operatingsystemrelease": [
-      ]
+      "operatingsystem": "RedHat"
     },
     {
-      "operatingsystem": "Debian",
-      "operatingsystemrelease": [
-      ]
+      "operatingsystem": "AlmaLinux"
     },
     {
-      "operatingsystem": "Ubuntu",
-      "operatingsystemrelease": [
-      ]
+      "operatingsystem": "Debian"
     },
     {
-      "operatingsystem": "Fedora",
-      "operatingsystemrelease": [
-      ]
+      "operatingsystem": "Ubuntu"
     },
     {
-      "operatingsystem": "SLES",
-      "operatingsystemrelease": [
-      ]
+      "operatingsystem": "SLES"
     }
   ],
   "requirements": [

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 2.0.2
+
+**Features**
+
+- Note stdlib 10 compat
+
 ## Release 2.0.1
 
 **Bugfixes**
